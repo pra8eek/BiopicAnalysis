@@ -46,8 +46,6 @@ movies = list(di.keys())
 
 releaseDateInfo = {}
 for i in range(len(movies)) :
-        if i == 5 :
-                break
         name, url = movies[i].split("||")
         # print(name, url)
         date = getReleaseDate(name)
