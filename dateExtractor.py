@@ -13,7 +13,10 @@ def getReleaseDate(movie) :
         # print(response.raw_body)
         di = json.loads(response.raw_body)
         # print(di)
-        arr = list(di['Search'])
+        try :
+            arr = list(di['Search'])
+        except :
+            return None
         found = False
         for x in arr :
                 if x['Title'] == movie :
@@ -47,9 +50,9 @@ movies = list(di.keys())
 releaseDateInfo = {}
 for i in range(len(movies)) :
         name, url = movies[i].split("||")
-        # print(name, url)
         date = getReleaseDate(name)
         releaseDateInfo[name] = date
+        print(i+1, "movies processed")
 
 with open("releaseDates.json", "w+") as f :
         json.dump(releaseDateInfo, f)
