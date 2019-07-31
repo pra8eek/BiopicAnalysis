@@ -19,12 +19,15 @@ def getReleaseDate(movie) :
             return None
         found = False
         for x in arr :
-                if x['Title'] == movie :
-                        found = True
-                        imdbID = x['imdbID']
+                try :
+                        if x['Title'] == movie :
+                                found = True
+                                imdbID = x['imdbID']
+                except :
+                        return None
 
         if not found :
-                print("Movie not found")
+                # print("Movie not found")
                 return None
         print(imdbID)
         req = "https://movie-database-imdb-alternative.p.rapidapi.com/?i="+imdbID+"&r=json"
@@ -48,11 +51,21 @@ with open('MovieDetails.json') as f:
 movies = list(di.keys())
 
 releaseDateInfo = {}
+notFoundList = []
 for i in range(len(movies)) :
         name, url = movies[i].split("||")
         date = getReleaseDate(name)
-        releaseDateInfo[name] = date
+        if date == None :
+                print("Info not fetched for", name, url)
+                notFoundList.append(name)
+                continue
+        else :
+                releaseDateInfo[name] = date
         print(i+1, "movies processed")
 
 with open("releaseDates.json", "w+") as f :
         json.dump(releaseDateInfo, f)
+
+with open("NotFound.txt", "w+") as f :
+        for item in notFoundList :
+                f.write(item)
