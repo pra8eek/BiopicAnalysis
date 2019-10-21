@@ -13,7 +13,7 @@ def getORES(revid):
     url = "https://ores.wikimedia.org/v3/scores/enwiki/?revids=" + str(revid)
     page = requests.get(url)
     di = json.loads(page.text)
-    return di
+    return di['enwiki']['scores']
 
 def getReadabilityMetrics(test_data) : 
 	'''
