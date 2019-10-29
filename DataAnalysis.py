@@ -7,19 +7,19 @@ import textstat
 import mwparserfromhell
 
 def getORES(revid): 
-	'''
-		Uses API to get the scores of a "batch of revisions", optimal batch size is 50
-	'''
+    '''
+        Uses API to get the scores of a "batch of revisions", optimal batch size is 50
+    '''
     url = "https://ores.wikimedia.org/v3/scores/enwiki/?revids=" + str(revid)
     page = requests.get(url)
     di = json.loads(page.text)
     return di['enwiki']['scores']
 
 def getReadabilityMetrics(test_data) : 
-	'''
-		for a given article IN TEXT FORMAT, returns its readability metrics
-		Uses textstat library, please install it
-	'''
+    '''
+        for a given article IN TEXT FORMAT, returns its readability metrics
+        Uses textstat library, please install it
+    '''
     metric = {"flesch_reading_ease" : textstat.flesch_reading_ease(test_data),
                 "smog_index" : textstat.smog_index(test_data),
                 "flesch_kincaid_grade" : textstat.flesch_kincaid_grade(test_data),
@@ -33,10 +33,10 @@ def getReadabilityMetrics(test_data) :
     return metric
 
 def getCounts(text) :
-	'''
-		for a given article in TEXT format, returns its wikilinks, references and 
-		word count in a dictionary
-	'''
+    '''
+        for a given article in TEXT format, returns its wikilinks, references and 
+        word count in a dictionary
+    '''
     code = mwparserfromhell.parse(text)
     di = { "wikilinks" : len(code.filter_wikilinks()),
           "references" : text.count("<ref>"),
@@ -44,12 +44,12 @@ def getCounts(text) :
     return di
 
 def dateDifference(APIDate, RevisionDate) :
-	''' 
-		The format of data we get from KnolML is different from the one
-		we get using IMDB API, this function converts thm to a common
-		format and calculates the difference.
-		-30 means 30 days before release, +30 means 30 days after
-	'''
+    ''' 
+        The format of data we get from KnolML is different from the one
+        we get using IMDB API, this function converts thm to a common
+        format and calculates the difference.
+        -30 means 30 days before release, +30 means 30 days after
+    '''
     converter = {"Jan":'1', "Feb":'2', "Mar":'3', "Apr":'4', 
             "May":'5', "Jun":'6', "Jul":'7', "Aug":'8',
             "Sep":'9', "Oct":'10', "Nov":'11', "Dec":'12'}
@@ -63,18 +63,18 @@ def dateDifference(APIDate, RevisionDate) :
     return (y-x).days
 
 def AnalyzeValidEdits(name, date):
-	'''
-		Valid edits means the ones within a period of 2 months
-		For each valid edit, it does the following 3 tasks
-		1) Get its ORES score
-		2) Get its readability metrics
-		3) Count wikilinks, references and number of words
-	'''
+    '''
+        Valid edits means the ones within a period of 2 months
+        For each valid edit, it does the following 3 tasks
+        1) Get its ORES score
+        2) Get its readability metrics
+        3) Count wikilinks, references and number of words
+    '''
     article = "./wiki/" + name.replace(' ','_') + ".xml"
     with open(article, 'r') as f :
         di = xmltodict.parse(f.read())
     
-    revisions = [x for x in di['mediawiki']['page']['revision']] #list of all articles for a movie
+    revisions = [x for x in di['page']['revision']] #list of all articles for a movie
     revs = [] #Batch of revisions for ORES Analysis
     allORES = {} #will store ORES scores for all revisions
 
@@ -83,11 +83,16 @@ def AnalyzeValidEdits(name, date):
         if diff < -60 :
             continue
         if diff > 60 :
+            revids = str(revs).replace(', ','|')[1:-1].replace("'","")
             allORES.update(getORES(revids))
             break
+        
+        try :
+            metrics = getReadabilityMetrics(revisions[i]['text']['#text'])
+            counts = getCounts(revisions[i]['text']['#text'])
+        except :
+            continue
 
-        metrics = getReadabilityMetrics(revisions[i]['text']['#text'])
-        counts = getCounts(revisions[i]['text']['#text'])
         revs.append(revisions[i]['id'])
         
         if len(revs) >= 50 : #since ORES scores are to be calculated in batches of 50s
@@ -97,10 +102,10 @@ def AnalyzeValidEdits(name, date):
 
 def getEachArticle() :
     '''
-    	This is the driver function, it gets the name of all biopics from MovieDetails.json
-    	and their release dates from ReleaseDates from releaseDates.json. Both these files
-    	are available in the repository.
-    	For each biopic, it performs proper analysis
+        This is the driver function, it gets the name of all biopics from MovieDetails.json
+        and their release dates from ReleaseDates from releaseDates.json. Both these files
+        are available in the repository.
+        For each biopic, it performs proper analysis
     '''
     with open("MovieDetails.json",'r') as f :
         movieDetails = json.loads(f.read())
@@ -117,3 +122,5 @@ def getEachArticle() :
         if date != "--" : #because we couldn't get all release dates using IMDB API
             AnalyzeValidEdits(name, date) #vaild means before and after 60 days
         break
+
+AnalyzeValidEdits("Edward Brittain", "28 May 2015")
