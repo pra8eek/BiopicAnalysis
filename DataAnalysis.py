@@ -7,17 +7,17 @@ import textstat
 import mwparserfromhell
 import matplotlib.pyplot as plt
 
-
 def drawGraph(stat) :
     fig, ax = plt.subplots(figsize=(8, 5.5)) #setting the size of the graph
     plt.grid(True, color="#93a1a1", alpha=0.2)
     #defining the axes of the graph
     ax.set_title("Readability w.r.t. Time", fontsize=25)
-    ax.set_xlabel("Index of revision", labelpad=15, fontsize=15, color="#333533")
+    ax.set_xlabel("Days before/after release", labelpad=15, fontsize=15, color="#333533")
     ax.set_ylabel("Metric of Article", labelpad=15, fontsize=15, color="#333533")
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    plt.plot(stat, color="#073642")
+    x = [x for x in range(-60, 60)]
+    plt.plot(x, stat, color="#073642")
     plt.show()
     # plt.savefig('Graph'+str(index)+'.1.png') #downloading and saving the graph
     # plt.close() #prevents the graph to be printed in the terminal
@@ -97,7 +97,7 @@ def AnalyzeValidEdits(name, date):
     revisions = [x for x in di['page']['revision']] #list of all articles for a movie
     revs = [] #Batch of revisions for ORES Analysis
     allORES = {} #will store ORES scores for all revisions
-    metricToPlot = []
+    metricToPlot = [0] * 120
     parameter = "smog_index"
     for i in range(len(revisions)) :
         diff = dateDifference(date ,revisions[i]['timestamp'].split('T')[0])
@@ -111,7 +111,7 @@ def AnalyzeValidEdits(name, date):
         try :
             metrics = getReadabilityMetrics(revisions[i]['text']['#text'])
             counts = getCounts(revisions[i]['text']['#text'])
-            metricToPlot.append(metrics[parameter])
+            metricToPlot[diff + 60] = metrics[parameter]
         except Exception as e :
             print(e)
             continue
@@ -122,6 +122,11 @@ def AnalyzeValidEdits(name, date):
             revids = str(revs).replace(', ','|')[1:-1].replace("'","")
             revs = []
             allORES.update(getORES(revids))
+
+    for i in range(1,120) :
+        if metricToPlot[i] == 0 and metricToPlot[i-1] != 0 :
+            metricToPlot[i] = metricToPlot[i-1]
+    
     drawGraph(metricToPlot)
 
 def getEachArticle() :
