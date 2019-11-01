@@ -75,10 +75,13 @@ def dateDifference(APIDate, RevisionDate) :
             "Sep":'9', "Oct":'10', "Nov":'11', "Dec":'12'}
     date = APIDate.split()
     date[1] = date[1].replace(date[1], converter[date[1]])
-    date = list(map(int, date[::-1]))
+    #print(date[::-1])
+    date = [int(i) for i in date[::-1]]
+    #date = list(map(int, date[::-1]))
     x = datetime.datetime(date[0], date[1], date[2])
     date = RevisionDate
-    date = list(map(int, date.split('-')))
+    date = [int(i) for i in date.split('-')]
+    #date = list(map(int, date.split('-')))
     y = datetime.datetime(date[0], date[1], date[2])
     return (y-x).days
 
@@ -147,4 +150,4 @@ def getEachArticle() :
             AnalyzeValidEdits(name, date) #vaild means before and after 60 days
         break
 
-AnalyzeValidEdits("Edward Brittain", "28 May 2015")
+AnalyzeValidEdits("Hugh Glass","27 Sep 2009")
